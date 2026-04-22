@@ -16,26 +16,45 @@
 #include "ATmega32A - Drivers/PeripheralDrivers/DIO/DIO.h"
 #include "ATmega32A - Drivers/PeripheralDrivers/USART/USART.h"
 
+/* HAL */
+#include "ATmega32A - Drivers/ComponentDrivers/HC-SR04 Ultrasonic/HCSR04.h"
+
 int main(void) {
 	/* Define Variables */
 	u8 receivedCommand = 0;
+	u8 systemMode = MODE_MANUAL; // Start in Bluetooth mode safely
 	
-	// 1. WAKE UP THE PERIPHERALS!
+	// Initialize the peripherals and pins
 	initializeProgram();
-	
-	// Optional: Send a welcome message to prove USART is alive
-	USART_sendString((const u8*)"System Ready! Waiting for command...\r\n");
+	LCD_clear();
+	Robot_UpdateLCD(systemMode, 0, "Standby");
 	
 	while (1) {
+		
+		// 1. THE NON-BLOCKING LISTENER
+		// Always check for Bluetooth commands, no matter what mode we are in!
 		if (USART_receiveByteNonBlocking(&receivedCommand) == E_OK) {
 			
-			// Echo the character back to the terminal so you can see it
-			USART_sendString((const u8*)"Received: ");
-			USART_sendByte(receivedCommand);
-			USART_sendString((const u8*)"\r\n");
-			
-			// Execute the motor command
-			ExecuteBluetoothMotorCommand(receivedCommand);
+			// Try pressing the extra buttons on your app to see which one toggles this.
+			// Common extra characters are X, W, w, V, v.
+			if (receivedCommand == 'X' || receivedCommand == 'W' || receivedCommand == 'w') {
+				
+				// Toggle the mode between 0 and 1 using XOR
+				systemMode ^= 1; 
+				
+				// Safety brake during the transition
+				Motors_off();    
+				LCD_clear();
+				
+			} else if (systemMode == MODE_MANUAL) {
+				// Only execute driving commands if we are in manual mode
+				ExecuteBluetoothMotorCommand(receivedCommand);
+			}
+		}
+
+		// 2. THE AUTONOMOUS ENGINE
+		if (systemMode == MODE_AUTONOMOUS) {
+			Autonomous_Routine();
 		}
 	}
 }

@@ -48,4 +48,10 @@
 #define STATE_PORT DIO_PORTB
 #define STATE_PIN DIO_PIN5
 
+/*
+*   ===================================================
+*					 Other Components
+*   ===================================================
+*/
+
 #endif /* CONFIG_H_ */

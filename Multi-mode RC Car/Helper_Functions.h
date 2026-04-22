@@ -58,4 +58,18 @@ void Motors_off(void);
 
 void ExecuteBluetoothMotorCommand(u8 command);
 
+/*
+* =============================================
+*			System Modes & LCD
+* =============================================
+*/
+#define MODE_MANUAL     0
+#define MODE_AUTONOMOUS 1
+
+// Unified LCD updater
+void Robot_UpdateLCD(u8 mode, u16 distance, const char* dirStr);
+
+// The main Mode 2 logic
+void Autonomous_Routine(void);
+
 #endif /* HELPER_FUNCTIONS_H_ */
