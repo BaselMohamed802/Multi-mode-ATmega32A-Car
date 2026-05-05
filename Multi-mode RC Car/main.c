@@ -24,7 +24,7 @@
 int main(void) {
     /* Define Variables */
     u8 receivedCommand = 0;
-    u8 systemMode = MODE_MANUAL; // Safely default to Manual upon boot
+    u8 systemMode = MODE_MANUAL;
     
     // 1. Wake up and configure all peripherals, timers, pins, and interrupts
     initializeProgram();
@@ -33,30 +33,25 @@ int main(void) {
     LCD_clear();
     Robot_UpdateLCD(systemMode, 0, "Standby");
     
-    // Optional: Send a welcome menu to the Bluetooth Terminal
-    USART_sendString((const u8*)"\r\n=== AMIT RC CAR ONLINE ===\r\n");
-    USART_sendString((const u8*)"Send '1' -> Manual Mode\r\n");
-    USART_sendString((const u8*)"Send '2' -> Autonomous Mode\r\n");
-    
     while (1) {
         
-        // =========================================================
-        // THE NON-BLOCKING BLUETOOTH LISTENER (Always Active)
-        // =========================================================
+        // ==================================================================
+        // BLUETOOTH MOOD NON-BLOCKING (KEY '1' to turn on Bluetooth mode)
+        // ==================================================================
         if (USART_receiveByteNonBlocking(&receivedCommand) == E_OK) {
             
-            // --- FSM MODE SWITCHING LOGIC ---
+            // --- Switching Logic ---
             if (receivedCommand == '1' && systemMode != MODE_MANUAL) {
                 systemMode = MODE_MANUAL;
-                Motors_off(); // Slam the brakes during transition
-                SERVO_setAngle_Timer2(90); // Center the head
+                Motors_off(); // Turn off all motors during transition
+                SERVO_setAngle_Timer2(90); // Center the servo head
                 LCD_clear();
                 Robot_UpdateLCD(systemMode, 0, "Standby");
                 USART_sendString((const u8*)"[SYS] Switched to MANUAL Mode\r\n");
             }
             else if (receivedCommand == '2' && systemMode != MODE_AUTONOMOUS) {
                 systemMode = MODE_AUTONOMOUS;
-                Motors_off(); // Slam the brakes during transition
+                Motors_off(); // Turn off all motors during transition
                 LCD_clear();
                 Robot_UpdateLCD(systemMode, 0, "Starting...");
                 USART_sendString((const u8*)"[SYS] Switched to AUTONOMOUS Mode\r\n");
@@ -69,7 +64,7 @@ int main(void) {
         }
 
         // =========================================================
-        // THE AUTONOMOUS ENGINE
+        // THE AUTONOMOUS MODE (KEY '2' Using Terminal to activate)
         // =========================================================
         if (systemMode == MODE_AUTONOMOUS) {
             // Hand control over to the ultrasonic sensor and servo FSM
