@@ -12,6 +12,7 @@
 #include "Helper_Functions.h"
 #include "CONFIG.h"
 #include <util/delay.h>
+#include <stdlib.h>
 #include <avr/interrupt.h>
 
 /* MCAL */
@@ -168,17 +169,31 @@ void ExecuteBluetoothMotorCommand(u8 command) {
 */
 
 void Robot_UpdateLCD(u8 mode, u16 distance, const char* dirStr) {
-	LCD_setCursor(0, 0); 
+	// Static variables remember their value between function calls
+	static u8 last_mode = 255;
+	static u16 last_distance = 999;
+	static const char* last_dirStr = "";
+
+	// Only update the slow LCD if something actually changed!
+	if ((mode == last_mode) && (dirStr == last_dirStr) && (abs((int)distance - (int)last_distance) <= 2)) {
+		return; // Exit immediately, if no text is updated to reduce lag
+	}
+
+	last_mode = mode;
+	last_distance = distance;
+	last_dirStr = dirStr;
+
+	LCD_setCursor(0, 0);
 	
 	if (mode == MODE_MANUAL) {
 		LCD_displayString((const u8*)"Mode: BLUETOOTH ");
-		LCD_setCursor(1, 0); 
+		LCD_setCursor(1, 0);
 		LCD_displayString((const u8*)"Cmd: ");
 		LCD_displayString((const u8*)dirStr);
-		LCD_displayString((const u8*)"       "); 
-	} else {
+		LCD_displayString((const u8*)"       ");
+		} else {
 		LCD_displayString((const u8*)"Mode: AUTONOMOUS");
-		LCD_setCursor(1, 0); 
+		LCD_setCursor(1, 0);
 		LCD_displayString((const u8*)"D:");
 		LCD_displayInt(distance);
 		LCD_displayString((const u8*)"cm Dir:");
