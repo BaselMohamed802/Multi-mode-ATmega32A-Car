@@ -1,7 +1,7 @@
 /*
  * main.c
  *
- * Created: 4/17/2026 6:39:09 PM
+ * Created: [Current Date]
  * Author: Basel Mohamed Mostafa Sayed
  * Description: Master Multi-Mode FSM Control Script
  */ 
@@ -44,7 +44,7 @@ int main(void) {
             if (receivedCommand == '1' && systemMode != MODE_MANUAL) {
                 systemMode = MODE_MANUAL;
                 Motors_off(); // Turn off all motors during transition
-                SERVO_setAngle_Timer2(90); // Center the servo head
+                SERVO_setAngle_Timer2(90); // Center the servo head using Timer 2
                 LCD_clear();
                 Robot_UpdateLCD(systemMode, 0, "Standby");
                 USART_sendString((const u8*)"[SYS] Switched to MANUAL Mode\r\n");

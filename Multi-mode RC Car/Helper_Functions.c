@@ -3,8 +3,7 @@
  *
  * Created: 4/14/2026 6:29:18 PM
  * Author: Basel Mohamed Mostafa Sayed
- * Description:
- *			This header file contains all the functions used in the project.
+ * Description: Header file containing all the helper functions for the Multi-Mode RC Car.
  */ 
 
 #define F_CPU 16000000UL
@@ -31,7 +30,7 @@
 * =============================================
 */
 
-void initializeProgram(){
+void initializeProgram(void) {
 	// 1. Initialize Standard DIO Pins
 	DIO_setPinDirection(IN1_LEFT_MOTORS_PORT, IN1_LEFT_MOTORS_PIN, DIO_PIN_OUTPUT);
 	DIO_setPinDirection(IN2_LEFT_MOTORS_PORT, IN2_LEFT_MOTORS_PIN, DIO_PIN_OUTPUT); 
@@ -40,20 +39,20 @@ void initializeProgram(){
 	DIO_setPinDirection(ENABLE_KEY_PORT, ENABLE_KEY_PIN, DIO_PIN_OUTPUT);
 	DIO_setPinDirection(STATE_PORT, STATE_PIN, DIO_PIN_INPUT);
 
-	// 2. Initialize PWM Pin (OC0 / PB3) as Output
+	// 2. Initialize PWM Pin (OC0 / PB3) as Output for DC Motors
 	DIO_setPinDirection(PWM_MOTOR_PORT, PWM_MOTOR_PIN, DIO_PIN_OUTPUT);
 
 	// 3. Initialize LCD
 	LCD_init();
 	
-	// 4. Initialize USART 
+	// 4. Initialize USART (Interrupt Driven)
 	USART_init(USART_ASYNC_MODE, 9600, PARITY_DISABLED, USART_DATA_8BIT, ONE_STOP_BIT);
 	USART_enableInterrupt(USART_INT_RX_COMPLETE);
 	
-	// 5. Initialize Ultrasonic sensor
+	// 5. Initialize Ultrasonic sensor (Polling mode on PC2/PC7)
 	HCSR04_init();
 	
-	// 6. Initialize Timer0 for Fast PWM (Motors)
+	// 6. Initialize Timer0 for Fast PWM (DC Motor Speed Control)
 	TIMER_PWMConfig_t pwmConfig = {
 		.timerId = TIMER0,
 		.channel = TIMER_CHANNEL_A,
@@ -83,33 +82,23 @@ void Motors_forward(u8 copy_u8Speed) {
 	if (copy_u8Speed > 100) copy_u8Speed = 100; 
 	TIMER_setDutyCycle(TIMER0, TIMER_CHANNEL_A, copy_u8Speed);
 	
-	DIO_setPinValue(IN1_LEFT_MOTORS_PORT, IN1_LEFT_MOTORS_PIN, DIO_PIN_HIGH);
-	DIO_setPinValue(IN2_LEFT_MOTORS_PORT, IN2_LEFT_MOTORS_PIN, DIO_PIN_LOW);
-	DIO_setPinValue(IN1_RIGHT_MOTORS_PORT, IN1_RIGHT_MOTORS_PIN, DIO_PIN_HIGH);
-	DIO_setPinValue(IN2_RIGHT_MOTORS_PORT, IN2_RIGHT_MOTORS_PIN, DIO_PIN_LOW);
+	DIO_setPinValue(IN1_LEFT_MOTORS_PORT, IN1_LEFT_MOTORS_PIN, DIO_PIN_LOW);
+	DIO_setPinValue(IN2_LEFT_MOTORS_PORT, IN2_LEFT_MOTORS_PIN, DIO_PIN_HIGH);
+	DIO_setPinValue(IN1_RIGHT_MOTORS_PORT, IN1_RIGHT_MOTORS_PIN, DIO_PIN_LOW);
+	DIO_setPinValue(IN2_RIGHT_MOTORS_PORT, IN2_RIGHT_MOTORS_PIN, DIO_PIN_HIGH);
 }
 
 void Motors_reverse(u8 copy_u8Speed) {
 	if (copy_u8Speed > 100) copy_u8Speed = 100;
 	TIMER_setDutyCycle(TIMER0, TIMER_CHANNEL_A, copy_u8Speed);
 	
-	DIO_setPinValue(IN1_LEFT_MOTORS_PORT, IN1_LEFT_MOTORS_PIN, DIO_PIN_LOW);
-	DIO_setPinValue(IN2_LEFT_MOTORS_PORT, IN2_LEFT_MOTORS_PIN, DIO_PIN_HIGH);
-	DIO_setPinValue(IN1_RIGHT_MOTORS_PORT, IN1_RIGHT_MOTORS_PIN, DIO_PIN_LOW);
-	DIO_setPinValue(IN2_RIGHT_MOTORS_PORT, IN2_RIGHT_MOTORS_PIN, DIO_PIN_HIGH);
-}
-
-void Motors_left(u8 copy_u8Speed) {
-	if (copy_u8Speed > 100) copy_u8Speed = 100;
-	TIMER_setDutyCycle(TIMER0, TIMER_CHANNEL_A, copy_u8Speed);
-	
-	DIO_setPinValue(IN1_LEFT_MOTORS_PORT, IN1_LEFT_MOTORS_PIN, DIO_PIN_LOW);
-	DIO_setPinValue(IN2_LEFT_MOTORS_PORT, IN2_LEFT_MOTORS_PIN, DIO_PIN_HIGH);
+	DIO_setPinValue(IN1_LEFT_MOTORS_PORT, IN1_LEFT_MOTORS_PIN, DIO_PIN_HIGH);
+	DIO_setPinValue(IN2_LEFT_MOTORS_PORT, IN2_LEFT_MOTORS_PIN, DIO_PIN_LOW);
 	DIO_setPinValue(IN1_RIGHT_MOTORS_PORT, IN1_RIGHT_MOTORS_PIN, DIO_PIN_HIGH);
 	DIO_setPinValue(IN2_RIGHT_MOTORS_PORT, IN2_RIGHT_MOTORS_PIN, DIO_PIN_LOW);
 }
 
-void Motors_right(u8 copy_u8Speed) {
+void Motors_left(u8 copy_u8Speed) {
 	if (copy_u8Speed > 100) copy_u8Speed = 100;
 	TIMER_setDutyCycle(TIMER0, TIMER_CHANNEL_A, copy_u8Speed);
 	
@@ -117,6 +106,16 @@ void Motors_right(u8 copy_u8Speed) {
 	DIO_setPinValue(IN2_LEFT_MOTORS_PORT, IN2_LEFT_MOTORS_PIN, DIO_PIN_LOW);
 	DIO_setPinValue(IN1_RIGHT_MOTORS_PORT, IN1_RIGHT_MOTORS_PIN, DIO_PIN_LOW);
 	DIO_setPinValue(IN2_RIGHT_MOTORS_PORT, IN2_RIGHT_MOTORS_PIN, DIO_PIN_HIGH);
+}
+
+void Motors_right(u8 copy_u8Speed) {
+	if (copy_u8Speed > 100) copy_u8Speed = 100;
+	TIMER_setDutyCycle(TIMER0, TIMER_CHANNEL_A, copy_u8Speed);
+	
+	DIO_setPinValue(IN1_LEFT_MOTORS_PORT, IN1_LEFT_MOTORS_PIN, DIO_PIN_LOW);
+	DIO_setPinValue(IN2_LEFT_MOTORS_PORT, IN2_LEFT_MOTORS_PIN, DIO_PIN_HIGH);
+	DIO_setPinValue(IN1_RIGHT_MOTORS_PORT, IN1_RIGHT_MOTORS_PIN, DIO_PIN_HIGH);
+	DIO_setPinValue(IN2_RIGHT_MOTORS_PORT, IN2_RIGHT_MOTORS_PIN, DIO_PIN_LOW);
 }
 
 void Motors_off(void) {
@@ -191,8 +190,8 @@ void Robot_UpdateLCD(u8 mode, u16 distance, const char* dirStr) {
 // Helper function to look right and return the distance
 u16 Robot_LookRight(void) {
 	u16 dist = 0;
-	SERVO_setAngle_Timer2(0); // Pan Right
-	_delay_ms(500);           // Wait for the mechanical gears to reach position
+	SERVO_setAngle_Timer2(0);        // Pan Right using Timer 2
+	_delay_ms(500);           
 	HCSR04_getDistance(&dist);
 	return dist;
 }
@@ -200,12 +199,11 @@ u16 Robot_LookRight(void) {
 // Helper function to look left and return the distance
 u16 Robot_LookLeft(void) {
 	u16 dist = 0;
-	SERVO_setAngle_Timer2(180); // Pan Left
-	_delay_ms(500);             // Wait for the mechanical gears to reach position
+	SERVO_setAngle_Timer2(180);      // Pan Left using Timer 2
+	_delay_ms(500);             
 	HCSR04_getDistance(&dist);
 	return dist;
 }
-
 
 void Autonomous_Routine(void) {
 	u16 distance = 0;
@@ -216,7 +214,7 @@ void Autonomous_Routine(void) {
 	if (status == HCSR04_OK) {
 		if (distance > 25) {
 			// Path is clear (> 25cm), keep driving forward
-			SERVO_setAngle_Timer2(90); // Ensure head is facing forward
+			SERVO_setAngle_Timer2(90); // Center head using Timer 2
 			Motors_forward(80);
 			Robot_UpdateLCD(MODE_AUTONOMOUS, distance, "FWD");
 		} else {
@@ -234,7 +232,7 @@ void Autonomous_Routine(void) {
 			Motors_off();
 
 			// 3. Scan the environment
-			Robot_UpdateLCD(MODE_AUTONOMOUS, distance, "SCN"); // "SCN" = Scanning
+			Robot_UpdateLCD(MODE_AUTONOMOUS, distance, "SCN"); 
 			distanceRight = Robot_LookRight();
 			distanceLeft = Robot_LookLeft();
 
@@ -247,7 +245,7 @@ void Autonomous_Routine(void) {
 				// Right side is more open
 				Motors_right(80);
 				Robot_UpdateLCD(MODE_AUTONOMOUS, distanceRight, "RGT");
-				_delay_ms(350); // Adjust this delay based on how long it takes your robot to turn 90 degrees
+				_delay_ms(350); 
 			} 
 			else if (distanceLeft > distanceRight && distanceLeft > 20) {
 				// Left side is more open
@@ -258,8 +256,8 @@ void Autonomous_Routine(void) {
 			else {
 				// Both sides are blocked! Initiate a U-Turn
 				Motors_right(80);
-				Robot_UpdateLCD(MODE_AUTONOMOUS, distanceRight, "UTN"); // "UTN" = U-Turn
-				_delay_ms(700); // Double the turn delay to spin 180 degrees
+				Robot_UpdateLCD(MODE_AUTONOMOUS, distanceRight, "UTN"); 
+				_delay_ms(700); 
 			}
 			
 			Motors_off();
